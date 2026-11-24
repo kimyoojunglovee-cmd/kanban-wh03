@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Monitoring | Integrated Warehouse System</title>
+<style>
+:root{--navy:#102744;--navy2:#173b63;--blue:#2f6fed;--bg:#f3f6fb;--line:#e4eaf2;--muted:#718096;--green:#16845b;--red:#c74343;--amber:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:#1d2b3c}
+.sidebar{position:fixed;inset:0 auto 0 0;width:238px;background:var(--navy);color:white;padding:26px 18px;display:flex;flex-direction:column}
+.brand{font-size:18px;font-weight:800;letter-spacing:.3px;padding:0 10px 32px}.brand small{display:block;color:#a9bfd8;font-size:11px;font-weight:500;margin-top:7px;letter-spacing:1.2px}
+.navlabel{font-size:10px;color:#8fa8c4;letter-spacing:1.4px;padding:0 11px;margin:12px 0}
+.navitem{padding:12px 13px;border-radius:9px;color:#d8e4f1;font-size:13px;margin:3px 0}.navitem.active{background:#244a73;color:white;font-weight:700}.sidefoot{margin-top:auto;color:#9fb3c9;font-size:11px;padding:12px}
+main{margin-left:238px;padding:30px 34px;max-width:1600px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.eyebrow{font-size:11px;color:var(--muted);letter-spacing:1.2px;font-weight:700}.topbar h1{font-size:25px;margin:5px 0 0;color:var(--navy)}.user{font-size:12px;background:white;border:1px solid var(--line);padding:10px 14px;border-radius:10px;color:#43556b}
+.notice{background:#eaf1fb;border:1px solid #d5e2f4;color:#34516f;padding:12px 15px;border-radius:10px;font-size:12px;margin-bottom:20px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px;margin-bottom:20px}.card{background:white;border:1px solid var(--line);border-radius:13px;padding:18px;box-shadow:0 3px 12px rgba(22,44,70,.035)}.clickable-card{cursor:pointer;transition:transform .15s,box-shadow .15s}.clickable-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(22,44,70,.10)}.clickable-card:focus{outline:2px solid var(--blue);outline-offset:2px}.sku-link{border:0;background:none;padding:0;color:var(--blue);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}.filter-note{font-size:11px;color:var(--blue);font-weight:700;margin:0 0 10px}.kpi-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.4px}.kpi-value{font-size:25px;font-weight:800;color:var(--navy);margin:10px 0 5px}.kpi-sub{font-size:11px;color:var(--muted)}.kpi-icon{float:right;background:#edf3fc;color:var(--blue);border-radius:9px;padding:8px;font-size:15px}
+.sectionhead{display:flex;justify-content:space-between;align-items:center;margin:25px 0 13px}.sectionhead h2{font-size:16px;margin:0;color:var(--navy)}.sectionhead p{font-size:11px;color:var(--muted);margin:5px 0 0}
+.warehouses{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.whcard{padding:17px 18px}.wh-top{display:flex;justify-content:space-between;align-items:center}.wh-code{font-size:12px;font-weight:800;color:var(--navy)}.tag{font-size:10px;padding:5px 8px;border-radius:20px;background:#eaf7f1;color:var(--green);font-weight:700}.tag.empty{background:#fff4df;color:var(--amber)}.wh-name{font-size:12px;color:var(--muted);margin-top:5px}.wh-total{font-size:22px;font-weight:800;margin:15px 0 4px}.wh-foot{font-size:11px;color:var(--muted)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.control{background:white;border:1px solid var(--line);border-radius:8px;padding:10px 11px;font-size:12px;color:#34465b;outline:none}.search{flex:1;min-width:190px}.btn{border:0;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:white}.secondary{background:white;border:1px solid var(--line);color:#34465b}.btn:hover{filter:brightness(.97)}
+.tablewrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:12px}.table{width:100%;border-collapse:collapse;min-width:1120px}.table th{text-align:left;background:#f8fafd;color:#718096;font-size:10px;letter-spacing:.6px;padding:13px 14px;border-bottom:1px solid var(--line)}.table td{padding:13px 14px;border-bottom:1px solid #edf1f6;font-size:12px}.table tr:last-child td{border-bottom:0}.sku{font-weight:800;color:var(--navy)}.muted{color:var(--muted)}.diff{font-weight:800}.negative{color:var(--red)}.positive{color:var(--green)}.status{font-size:10px;font-weight:700;padding:5px 8px;border-radius:20px;display:inline-block}.status.short{background:#fff0ef;color:var(--red)}.status.over{background:#eaf7f1;color:var(--green)}.status.match{background:#edf3fc;color:var(--blue)}.status.unchecked{background:#f1f3f6;color:#64748b}.action{color:var(--blue);background:none;border:0;font-size:11px;font-weight:700;cursor:pointer}
+.footer{font-size:10px;color:#8a98a9;margin:17px 0 5px}
+.modalback{position:fixed;inset:0;background:#0c1d32a6;display:none;align-items:center;justify-content:center;padding:18px;z-index:5}.modal{background:white;border-radius:14px;padding:22px;width:min(440px,100%);box-shadow:0 20px 70px #10274455}.modal h3{margin:0 0 16px;color:var(--navy)}.formrow{margin:12px 0}.formrow label{display:block;font-size:11px;color:#617187;margin-bottom:6px;font-weight:700}.formrow input,.formrow select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:13px}.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+@media(max-width:950px){.sidebar{width:190px}main{margin-left:190px;padding:24px 20px}.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.sidebar{position:static;width:auto;padding:15px 18px}.brand{padding:0}.sidebar .navlabel,.sidebar .navitem,.sidefoot{display:none}main{margin:0;padding:20px 14px}.topbar{align-items:flex-start;gap:10px}.topbar h1{font-size:21px}.user{font-size:10px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{padding:14px}.kpi-value{font-size:20px}.warehouses{grid-template-columns:1fr}.sectionhead{margin-top:22px}}
+
+.navitem{cursor:pointer;user-select:none}.navitem:hover{background:#1b3c60;color:#fff}
+.navitem:focus{outline:2px solid #74a8ff;outline-offset:2px}
+.page-intro{margin:0 0 18px;color:var(--muted);font-size:12px;line-height:1.6}
+.page-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.empty-state{padding:28px;text-align:center;color:var(--muted);font-size:12px}
+.form-inline{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}
+.form-inline .control{min-width:130px}
+@media(max-width:650px){.page-kpis{grid-template-columns:1fr 1fr}.form-inline .control{flex:1;min-width:100%}}
+
+
+.kanban-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}
+.kanban-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+.kanban-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:17px;display:grid;grid-template-columns:1fr 118px;gap:14px;align-items:center;break-inside:avoid}
+.kanban-card h3{margin:0 0 5px;color:var(--navy);font-size:16px}
+.kanban-card .pallet-id{font-weight:800;color:var(--blue);font-size:12px;letter-spacing:.4px}
+.kanban-card .kanban-meta{font-size:11px;color:#52657b;line-height:1.7;margin-top:9px}
+.qrbox{width:112px;height:112px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px}
+.qrbox img,.qrbox canvas{max-width:100%;max-height:100%}
+.kanban-detail{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-top:14px}
+.kanban-detail h2{margin:0;color:var(--navy)}
+.kanban-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.kanban-field{background:#f7f9fc;border:1px solid var(--line);border-radius:9px;padding:12px}
+.kanban-field small{display:block;color:var(--muted);font-size:10px;font-weight:700;margin-bottom:6px}
+.kanban-field strong{font-size:15px;color:var(--navy)}
+@media(max-width:650px){.kanban-grid{grid-template-columns:1fr}.kanban-card{grid-template-columns:1fr 100px}.qrbox{width:96px;height:96px}.kanban-fields{grid-template-columns:1fr 1fr}}
+@media print{
+ body{background:white}.sidebar,.topbar,.notice,.kanban-toolbar,.page-intro,.sectionhead,.footer,.no-print{display:none!important}
+ main{margin:0!important;padding:0!important;max-width:none!important}
+ #kanbanPrintArea{display:grid!important;grid-template-columns:repeat(2,1fr);gap:8mm}
+ .kanban-card{border:1px solid #333;border-radius:0;box-shadow:none;padding:8mm;min-height:55mm}
+ .kanban-card h3{font-size:14pt}.kanban-card .pallet-id{font-size:10pt}.kanban-card .kanban-meta{font-size:8pt}
+ .qrbox{border:0;width:30mm;height:30mm}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand">WAREHOUSE<span style="color:#74a8ff">.</span><small>INTEGRATED SYSTEM</small></div>
+  <div class="navlabel">MENU UTAMA</div>
+  <div class="navitem active" data-page="dashboard" role="button" tabindex="0">▦ &nbsp; Stock Monitoring</div>
+  <div class="navitem" data-page="persediaan" role="button" tabindex="0">▤ &nbsp; Data Persediaan</div>
+  <div class="navitem" data-page="pergerakan" role="button" tabindex="0">⇄ &nbsp; Pergerakan Stok</div>
+  <div class="navitem" data-page="opname" role="button" tabindex="0">✓ &nbsp; Stock Opname</div>
+  <div class="navitem" data-page="kanban" role="button" tabindex="0">▣ &nbsp; Kanban Barcode</div>
+  <div class="sidefoot">Prototype Sistem Informasi Gudang<br>WH-03 · Finished Goods</div>
+</aside>
+<main>
+  <div class="topbar">
+    <div><div class="eyebrow">INVENTORY CONTROL CENTER · FINISHED GOODS</div><h1>Stock Monitoring Dashboard WH-03</h1></div>
+    <div class="user">● &nbsp; Administrator &nbsp; | &nbsp; Demo</div>
+  </div>
+  <div class="notice"><b>Informasi data:</b> Dashboard ini difokuskan khusus untuk gudang WH-03 (Finished Goods) berdasarkan 28 SKU pada data sumber. Anda dapat memperbarui stok aktual atau menambahkan data barang melalui tombol <b>Tambah Data</b>. Data input tersimpan pada browser perangkat yang digunakan.</div>
+  <div class="grid">
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="ALL" title="Lihat semua SKU"><span class="kpi-icon">▦</span><div class="kpi-label">TOTAL SKU TERDAFTAR</div><div class="kpi-value" id="kSku">28</div><div class="kpi-sub">Seluruh gudang</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="ALL" title="Lihat rincian stok sistem"><span class="kpi-icon">▤</span><div class="kpi-label">TOTAL STOK SISTEM</div><div class="kpi-value" id="kSystem">64.026</div><div class="kpi-sub">Unit berdasarkan data tersimpan</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="ALL" title="Lihat rincian stok aktual"><span class="kpi-icon">▣</span><div class="kpi-label">TOTAL STOK AKTUAL</div><div class="kpi-value" id="kActual">62.971</div><div class="kpi-sub">Unit berdasarkan input aktual</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="ALL" title="Lihat seluruh selisih stok"><span class="kpi-icon">⚑</span><div class="kpi-label">TOTAL SELISIH ABSOLUT</div><div class="kpi-value negative" id="kAbs">2.915</div><div class="kpi-sub" id="kAbsSub">Kekurangan + kelebihan stok</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="ALL" title="Lihat seluruh selisih bersih"><span class="kpi-icon">↕</span><div class="kpi-label">SELISIH BERSIH</div><div class="kpi-value negative" id="kDiff">-1.055</div><div class="kpi-sub" id="kDiffSub">Aktual dikurangi sistem</div></div>
+  </div>
+  <div class="sectionhead"><div><h2>Ringkasan Gudang</h2><p>Status ketersediaan data stok per gudang</p></div></div>
+  <div class="warehouses" id="warehouseCards"></div>
+  <div class="sectionhead"><div><h2>Analisis Selisih Stok</h2><p>Rincian kuantitas selisih berdasarkan 28 SKU WH-03</p></div></div>
+  <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="short" title="Klik untuk melihat SKU stok kurang"><div class="kpi-label">SKU STOK KURANG</div><div class="kpi-value negative" id="countShort">18</div><div class="kpi-sub">Barang aktual di bawah sistem</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="short" title="Klik untuk melihat rincian kekurangan"><div class="kpi-label">TOTAL KEKURANGAN</div><div class="kpi-value negative" id="qtyShort">1.985</div><div class="kpi-sub">Unit kekurangan</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="over" title="Klik untuk melihat SKU stok lebih"><div class="kpi-label">SKU STOK LEBIH</div><div class="kpi-value positive" id="countOver">10</div><div class="kpi-sub">Barang aktual di atas sistem</div></div>
+    <div class="card clickable-card" role="button" tabindex="0" data-filter="over" title="Klik untuk melihat rincian kelebihan"><div class="kpi-label">TOTAL KELEBIHAN</div><div class="kpi-value positive" id="qtyOver">930</div><div class="kpi-sub">Unit kelebihan</div></div>
+  </div>
+  <div class="sectionhead" id="detailSection"><div><h2>Detail Persediaan — 28 SKU</h2><p>28 SKU terisi berdasarkan Item Master dan Location Master pada Data PST.xlsx, termasuk kategori, gudang, lokasi, stok, selisih, dan persentase.</p></div></div>
+  <div id="filterNote" class="filter-note">Menampilkan seluruh 28 SKU dari Data PST.xlsx.</div><div class="toolbar">
+    <input id="search" class="control search" placeholder="Cari SKU, nama barang, atau lokasi...">
+    <select id="whFilter" class="control"><option value="WH-03">WH-03 · Finished Goods</option></select>
+    <select id="statusFilter" class="control" onchange="applyStatusFilter(this.value)" oninput="applyStatusFilter(this.value)"><option value="ALL">Semua Status</option><option value="short">Stok Kurang</option><option value="over">Stok Lebih</option><option value="match">Sesuai</option><option value="unchecked">Belum Dicek</option></select><button class="btn secondary" type="button" onclick="applyStatusFilter(document.getElementById('statusFilter').value)">Terapkan Filter</button>
+    <button class="btn secondary" onclick="exportCSV()">↓ Ekspor CSV</button>
+    <button class="btn primary" onclick="openModal()">＋ Tambah Data</button>
+  </div>
+  <div class="tablewrap"><table class="table"><thead><tr><th>SKU</th><th>NAMA BARANG</th><th>KATEGORI</th><th>GUDANG</th><th>LOKASI</th><th>STOK SISTEM</th><th>STOK AKTUAL</th><th>SELISIH</th><th>% SELISIH</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody id="rows">
+<tr><td class="sku">SH001</td><td>Tudung Saji</td><td>Pcs</td><td>WH-03</td><td>B1</td><td>1.963</td><td>1.844</td><td class="diff negative">-119</td><td class="negative">-6,06%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH001')">Edit</button> <button class="action" onclick="removeRecord('SH001')">Hapus</button></td></tr>
+<tr><td class="sku">SH002</td><td>Rak Sendal</td><td>Pcs</td><td>WH-03</td><td>A1</td><td>3.109</td><td>3.033</td><td class="diff negative">-76</td><td class="negative">-2,44%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH002')">Edit</button> <button class="action" onclick="removeRecord('SH002')">Hapus</button></td></tr>
+<tr><td class="sku">SH003</td><td>Dispenser Beras</td><td>Pcs</td><td>WH-03</td><td>C1</td><td>1.663</td><td>1.760</td><td class="diff positive">+97</td><td class="positive">5,83%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH003')">Edit</button> <button class="action" onclick="removeRecord('SH003')">Hapus</button></td></tr>
+<tr><td class="sku">SH004</td><td>Rak  4 Susun</td><td>Pcs</td><td>WH-03</td><td>C2</td><td>1.419</td><td>1.481</td><td class="diff positive">+62</td><td class="positive">4,37%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH004')">Edit</button> <button class="action" onclick="removeRecord('SH004')">Hapus</button></td></tr>
+<tr><td class="sku">SH005</td><td>Laci Roxy</td><td>Pcs</td><td>WH-03</td><td>B2</td><td>1.901</td><td>1.755</td><td class="diff negative">-146</td><td class="negative">-7,68%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH005')">Edit</button> <button class="action" onclick="removeRecord('SH005')">Hapus</button></td></tr>
+<tr><td class="sku">SH006</td><td>Soap Pump</td><td>Pcs</td><td>WH-03</td><td>A2</td><td>3.640</td><td>3.420</td><td class="diff negative">-220</td><td class="negative">-6,04%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH006')">Edit</button> <button class="action" onclick="removeRecord('SH006')">Hapus</button></td></tr>
+<tr><td class="sku">SH007</td><td>Laci Kosmetik</td><td>Pcs</td><td>WH-03</td><td>A3</td><td>3.147</td><td>3.052</td><td class="diff negative">-95</td><td class="negative">-3,02%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH007')">Edit</button> <button class="action" onclick="removeRecord('SH007')">Hapus</button></td></tr>
+<tr><td class="sku">SH008</td><td>Laci Beruang</td><td>Pcs</td><td>WH-03</td><td>A4</td><td>3.667</td><td>3.568</td><td class="diff negative">-99</td><td class="negative">-2,70%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH008')">Edit</button> <button class="action" onclick="removeRecord('SH008')">Hapus</button></td></tr>
+<tr><td class="sku">SH009</td><td>Kotak Obat</td><td>Pcs</td><td>WH-03</td><td>B3</td><td>2.308</td><td>2.219</td><td class="diff negative">-89</td><td class="negative">-3,86%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH009')">Edit</button> <button class="action" onclick="removeRecord('SH009')">Hapus</button></td></tr>
+<tr><td class="sku">SH010</td><td>Frame</td><td>Pcs</td><td>WH-03</td><td>A5</td><td>3.148</td><td>3.047</td><td class="diff negative">-101</td><td class="negative">-3,21%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH010')">Edit</button> <button class="action" onclick="removeRecord('SH010')">Hapus</button></td></tr>
+<tr><td class="sku">SH011</td><td>Rak Kristal</td><td>Pcs</td><td>WH-03</td><td>B4</td><td>2.634</td><td>2.688</td><td class="diff positive">+54</td><td class="positive">2,05%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH011')">Edit</button> <button class="action" onclick="removeRecord('SH011')">Hapus</button></td></tr>
+<tr><td class="sku">SH012</td><td>Spin Mop</td><td>Pcs</td><td>WH-03</td><td>C3</td><td>1.419</td><td>1.319</td><td class="diff negative">-100</td><td class="negative">-7,05%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH012')">Edit</button> <button class="action" onclick="removeRecord('SH012')">Hapus</button></td></tr>
+<tr><td class="sku">SH013</td><td>Lemari Lipat</td><td>Pcs</td><td>WH-03</td><td>C4</td><td>1.608</td><td>1.506</td><td class="diff negative">-102</td><td class="negative">-6,34%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH013')">Edit</button> <button class="action" onclick="removeRecord('SH013')">Hapus</button></td></tr>
+<tr><td class="sku">SH014</td><td>Toples Set</td><td>Pcs</td><td>WH-03</td><td>B5</td><td>2.340</td><td>2.519</td><td class="diff positive">+179</td><td class="positive">7,65%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH014')">Edit</button> <button class="action" onclick="removeRecord('SH014')">Hapus</button></td></tr>
+<tr><td class="sku">SH015</td><td>Box Telur</td><td>Pcs</td><td>WH-03</td><td>B6</td><td>2.077</td><td>1.967</td><td class="diff negative">-110</td><td class="negative">-5,30%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH015')">Edit</button> <button class="action" onclick="removeRecord('SH015')">Hapus</button></td></tr>
+<tr><td class="sku">SH016</td><td>Laci Aksesoris 9</td><td>Pcs</td><td>WH-03</td><td>B7</td><td>2.048</td><td>2.101</td><td class="diff positive">+53</td><td class="positive">2,59%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH016')">Edit</button> <button class="action" onclick="removeRecord('SH016')">Hapus</button></td></tr>
+<tr><td class="sku">SH017</td><td>Box Floral</td><td>Pcs</td><td>WH-03</td><td>C5</td><td>827</td><td>845</td><td class="diff positive">+18</td><td class="positive">2,18%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH017')">Edit</button> <button class="action" onclick="removeRecord('SH017')">Hapus</button></td></tr>
+<tr><td class="sku">SH018</td><td>Box Bumbu</td><td>Pcs</td><td>WH-03</td><td>A6</td><td>3.429</td><td>3.664</td><td class="diff positive">+235</td><td class="positive">6,85%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH018')">Edit</button> <button class="action" onclick="removeRecord('SH018')">Hapus</button></td></tr>
+<tr><td class="sku">SH019</td><td>Rak Kosmetik Putar</td><td>Pcs</td><td>WH-03</td><td>B8</td><td>2.249</td><td>2.058</td><td class="diff negative">-191</td><td class="negative">-8,49%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH019')">Edit</button> <button class="action" onclick="removeRecord('SH019')">Hapus</button></td></tr>
+<tr><td class="sku">SH020</td><td>Rak Laci Mini</td><td>Pcs</td><td>WH-03</td><td>C6</td><td>1.145</td><td>1.198</td><td class="diff positive">+53</td><td class="positive">4,63%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH020')">Edit</button> <button class="action" onclick="removeRecord('SH020')">Hapus</button></td></tr>
+<tr><td class="sku">SH021</td><td>Rak Kosmetik Sekat 3 &amp; 4</td><td>Pcs</td><td>WH-03</td><td>C7</td><td>1.691</td><td>1.576</td><td class="diff negative">-115</td><td class="negative">-6,80%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH021')">Edit</button> <button class="action" onclick="removeRecord('SH021')">Hapus</button></td></tr>
+<tr><td class="sku">SH022</td><td>Laundry Basket</td><td>Pcs</td><td>WH-03</td><td>C8</td><td>849</td><td>834</td><td class="diff negative">-15</td><td class="negative">-1,77%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH022')">Edit</button> <button class="action" onclick="removeRecord('SH022')">Hapus</button></td></tr>
+<tr><td class="sku">SH023</td><td>Rak Kosmetik 24 &amp; 24</td><td>Pcs</td><td>WH-03</td><td>C9</td><td>1.297</td><td>1.217</td><td class="diff negative">-80</td><td class="negative">-6,17%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH023')">Edit</button> <button class="action" onclick="removeRecord('SH023')">Hapus</button></td></tr>
+<tr><td class="sku">SH024</td><td>Hanger 9 Hole In 1</td><td>Pcs</td><td>WH-03</td><td>A7</td><td>2.938</td><td>3.056</td><td class="diff positive">+118</td><td class="positive">4,02%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH024')">Edit</button> <button class="action" onclick="removeRecord('SH024')">Hapus</button></td></tr>
+<tr><td class="sku">SH025</td><td>Cetakan Jelly</td><td>Pcs</td><td>WH-03</td><td>B9</td><td>2.678</td><td>2.739</td><td class="diff positive">+61</td><td class="positive">2,28%</td><td><span class="status over">Stok Lebih</span></td><td><button class="action" onclick="editRecord('SH025')">Edit</button> <button class="action" onclick="removeRecord('SH025')">Hapus</button></td></tr>
+<tr><td class="sku">SH026</td><td>Hanger Set</td><td>Pcs</td><td>WH-03</td><td>A8</td><td>3.955</td><td>3.832</td><td class="diff negative">-123</td><td class="negative">-3,11%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH026')">Edit</button> <button class="action" onclick="removeRecord('SH026')">Hapus</button></td></tr>
+<tr><td class="sku">SH027</td><td>Container Box</td><td>Pcs</td><td>WH-03</td><td>C10</td><td>1.697</td><td>1.624</td><td class="diff negative">-73</td><td class="negative">-4,30%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH027')">Edit</button> <button class="action" onclick="removeRecord('SH027')">Hapus</button></td></tr>
+<tr><td class="sku">SH028</td><td>Box Penyimpanan</td><td>Pcs</td><td>WH-03</td><td>A9</td><td>3.180</td><td>3.049</td><td class="diff negative">-131</td><td class="negative">-4,12%</td><td><span class="status short">Stok Kurang</span></td><td><button class="action" onclick="editRecord('SH028')">Edit</button> <button class="action" onclick="removeRecord('SH028')">Hapus</button></td></tr>
+</tbody></table></div>
+  <div class="footer">Sumber: Data PST.xlsx (Item Master, Location Master, dan Warehouse List). Selisih dan persentase mengikuti nilai pada Location Master. Prototype berjalan secara lokal di browser.</div>
+</main>
+<div class="modalback" id="modalback">
+ <div class="modal">
+  <h3 id="modalTitle">Tambah Data Stok</h3>
+  <div class="formrow"><label>Gudang</label><select id="fWh"><option>WH-03</option></select></div>
+  <div class="formrow"><label>SKU</label><input id="fSku" placeholder="Contoh: SKU029"></div>
+  <div class="formrow"><label>Nama Barang</label><input id="fName" placeholder="Nama barang"></div>
+  <div class="formrow"><label>Lokasi</label><input id="fLoc" placeholder="Contoh: A1"></div>
+  <div class="formrow"><label>Stok Sistem</label><input id="fSystem" type="number" min="0" placeholder="0"></div>
+  <div class="formrow"><label>Stok Aktual (boleh dikosongkan jika belum dicek)</label><input id="fActual" type="number" min="0" placeholder="Kosongkan jika belum diperiksa"></div>
+  <div class="modalactions"><button class="btn secondary" onclick="closeModal()">Batal</button><button class="btn primary" onclick="saveRecord()">Simpan Data</button></div>
+ </div>
+</div>
+<script>
+const initial = [
+["SH001","Tudung Saji","Pcs","WH-03","B1",1963,1844],
+["SH002","Rak Sendal","Pcs","WH-03","A1",3109,3033],
+["SH003","Dispenser Beras","Pcs","WH-03","C1",1663,1760],
+["SH004","Rak  4 Susun","Pcs","WH-03","C2",1419,1481],
+["SH005","Laci Roxy","Pcs","WH-03","B2",1901,1755],
+["SH006","Soap Pump","Pcs","WH-03","A2",3640,3420],
+["SH007","Laci Kosmetik","Pcs","WH-03","A3",3147,3052],
+["SH008","Laci Beruang","Pcs","WH-03","A4",3667,3568],
+["SH009","Kotak Obat","Pcs","WH-03","B3",2308,2219],
+["SH010","Frame","Pcs","WH-03","A5",3148,3047],
+["SH011","Rak Kristal","Pcs","WH-03","B4",2634,2688],
+["SH012","Spin Mop","Pcs","WH-03","C3",1419,1319],
+["SH013","Lemari Lipat","Pcs","WH-03","C4",1608,1506],
+["SH014","Toples Set","Pcs","WH-03","B5",2340,2519],
+["SH015","Box Telur","Pcs","WH-03","B6",2077,1967],
+["SH016","Laci Aksesoris 9","Pcs","WH-03","B7",2048,2101],
+["SH017","Box Floral","Pcs","WH-03","C5",827,845],
+["SH018","Box Bumbu","Pcs","WH-03","A6",3429,3664],
+["SH019","Rak Kosmetik Putar","Pcs","WH-03","B8",2249,2058],
+["SH020","Rak Laci Mini","Pcs","WH-03","C6",1145,1198],
+["SH021","Rak Kosmetik Sekat 3 & 4","Pcs","WH-03","C7",1691,1576],
+["SH022","Laundry Basket","Pcs","WH-03","C8",849,834],
+["SH023","Rak Kosmetik 24 & 24","Pcs","WH-03","C9",1297,1217],
+["SH024","Hanger 9 Hole In 1","Pcs","WH-03","A7",2938,3056],
+["SH025","Cetakan Jelly","Pcs","WH-03","B9",2678,2739],
+["SH026","Hanger Set","Pcs","WH-03","A8",3955,3832],
+["SH027","Container Box","Pcs","WH-03","C10",1697,1624],
+["SH028","Box Penyimpanan","Pcs","WH-03","A9",3180,3049]
+].map(x=>({sku:x[0],name:x[1],category:x[2],wh:x[3],loc:x[4],system:x[5],actual:x[6]}));
+let records = initial.map(r=>({...r}));
+let editSku=null;
+const fmt=n=>Number(n).toLocaleString("id-ID");
+const saveLocal=()=>localStorage.setItem("stockMonitoringPST_v1",JSON.stringify(records));
+function state(r){if(r.actual===null||r.actual===undefined||r.actual==="")return "unchecked";let d=Number(r.actual)-Number(r.system);return d===0?"match":d<0?"short":"over";}
+function totals(arr){return arr.reduce((a,r)=>{a.system+=Number(r.system)||0;if(r.actual!==null&&r.actual!==undefined&&r.actual!=="")a.actual+=Number(r.actual)||0;return a;},{system:0,actual:0});}
+function render(){
+ const t=totals(records), checked=records.filter(r=>state(r)!=="unchecked"), diff=t.actual-t.system;
+ const absDiff=checked.reduce((sum,r)=>sum+Math.abs(Number(r.actual)-Number(r.system)),0);
+ const shortage=checked.filter(r=>Number(r.actual)<Number(r.system)).reduce((sum,r)=>sum+Number(r.system)-Number(r.actual),0);
+ const surplus=checked.filter(r=>Number(r.actual)>Number(r.system)).reduce((sum,r)=>sum+Number(r.actual)-Number(r.system),0);
+ document.getElementById("kSku").textContent=fmt(records.length);
+ document.getElementById("kSystem").textContent=fmt(t.system);
+ document.getElementById("kActual").textContent=fmt(t.actual);
+ document.getElementById("kAbs").textContent=fmt(absDiff);
+ document.getElementById("kAbsSub").textContent="Kurang "+fmt(shortage)+" · Lebih "+fmt(surplus);
+ document.getElementById("countShort").textContent=fmt(checked.filter(r=>Number(r.actual)<Number(r.system)).length);
+ document.getElementById("qtyShort").textContent=fmt(shortage);
+ document.getElementById("countOver").textContent=fmt(checked.filter(r=>Number(r.actual)>Number(r.system)).length);
+ document.getElementById("qtyOver").textContent=fmt(surplus);
+ const kd=document.getElementById("kDiff");kd.textContent=(diff>0?"+":"")+fmt(diff);kd.className="kpi-value "+(diff<0?"negative":diff>0?"positive":"");
+ document.getElementById("kDiffSub").textContent=checked.length+" dari "+records.length+" SKU sudah memiliki stok aktual";
+ const names={"WH-03":"Finished Goods"};
+ document.getElementById("warehouseCards").innerHTML=["WH-03"].map(wh=>{
+  const a=records.filter(r=>r.wh===wh),s=totals(a),empty=a.length===0;
+  return `<div class="card whcard"><div class="wh-top"><span class="wh-code">${wh}</span><span class="tag ${empty?"empty":""}">${empty?"Belum Ada Data":"Data Tersedia"}</span></div><div class="wh-name">${names[wh]}</div><div class="wh-total">${fmt(s.system)} <span class="muted" style="font-size:11px;font-weight:500">unit sistem</span></div><div class="wh-foot">${a.length} SKU terdaftar · Stok aktual ${fmt(s.actual)} unit</div></div>`;
+ }).join("");
+ const q=document.getElementById("search").value.toLowerCase(),wh="WH-03",st=document.getElementById("statusFilter").value;
+ const filtered=records.filter(r=>(r.wh===wh)&&(st==="ALL"||state(r)===st)&&[r.sku,r.name,r.loc,r.wh].join(" ").toLowerCase().includes(q));
+ document.getElementById("rows").innerHTML=filtered.length?filtered.map(r=>{
+  const s=state(r),d=s==="unchecked"?null:Number(r.actual)-Number(r.system);
+  const label={short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"}[s];
+  return `<tr><td class="sku"><button class="sku-link" onclick="showDetail('${esc(r.sku)}')">${esc(r.sku)}</button></td><td>${esc(r.name)}</td><td>${esc(r.category||"Pcs")}</td><td>${r.wh}</td><td>${esc(r.loc)}</td><td>${fmt(r.system)}</td><td>${s==="unchecked"?"—":fmt(r.actual)}</td><td class="diff ${d===null?"muted":d<0?"negative":d>0?"positive":""}">${d===null?"—":(d>0?"+":"")+fmt(d)}</td><td class="${d===null?"muted":d<0?"negative":d>0?"positive":""}">${d===null?"—":((d/Number(r.system))*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2})+"%"}</td><td><span class="status ${s}">${label}</span></td><td><button class="action" onclick="editRecord('${esc(r.sku)}')">Edit</button> <button class="action" onclick="removeRecord('${esc(r.sku)}')">Hapus</button></td></tr>`;
+ }).join(""):`<tr><td colspan="11" class="muted" style="text-align:center;padding:28px">Tidak ada data yang sesuai dengan filter.</td></tr>`;
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function openModal(){editSku=null;document.getElementById("modalTitle").textContent="Tambah Data Stok";["fSku","fName","fLoc","fSystem","fActual"].forEach(id=>document.getElementById(id).value="");document.getElementById("fSku").disabled=false;document.getElementById("modalback").style.display="flex";}
+function closeModal(){document.getElementById("modalback").style.display="none";}
+function editRecord(sku){const r=records.find(x=>x.sku===sku);if(!r)return;editSku=sku;document.getElementById("modalTitle").textContent="Edit Data Stok";document.getElementById("fWh").value=r.wh;document.getElementById("fSku").value=r.sku;document.getElementById("fSku").disabled=true;document.getElementById("fName").value=r.name;document.getElementById("fLoc").value=r.loc;document.getElementById("fSystem").value=r.system;document.getElementById("fActual").value=r.actual??"";document.getElementById("modalback").style.display="flex";}
+function saveRecord(){
+ const sku=document.getElementById("fSku").value.trim(),name=document.getElementById("fName").value.trim(),wh=document.getElementById("fWh").value,loc=document.getElementById("fLoc").value.trim(),system=document.getElementById("fSystem").value,actual=document.getElementById("fActual").value;
+ if(!sku||!name||!loc||system===""||Number(system)<0||(actual!==""&&Number(actual)<0)){alert("Lengkapi SKU, nama, lokasi, dan stok sistem dengan nilai yang valid.");return;}
+ if(!editSku&&records.some(r=>r.sku.toLowerCase()===sku.toLowerCase())){alert("SKU sudah terdaftar. Gunakan SKU yang berbeda.");return;}
+ const obj={sku,name,wh,loc,system:Number(system),actual:actual===""?null:Number(actual)};
+ if(editSku){const i=records.findIndex(r=>r.sku===editSku);records[i]=obj;}else records.push(obj);
+ saveLocal();closeModal();if(document.getElementById('kSku')){render();}else if(typeof activePage!=='undefined'){showPage(activePage);}
+}
+function removeRecord(sku){if(!confirm("Hapus data "+sku+" dari daftar stok pada browser ini?"))return;records=records.filter(r=>r.sku!==sku);saveLocal();render();}
+function exportCSV(){
+ const headers=["SKU","Nama Barang","Kategori","Gudang","Lokasi","Stok Sistem","Stok Aktual","Selisih","Persentase Selisih","Status"];
+ const lines=records.map(r=>{const s=state(r),d=s==="unchecked"?"":Number(r.actual)-Number(r.system);return [r.sku,r.name,r.category||"Pcs",r.wh,r.loc,r.system,r.actual??"",d,d===""?"":((d/Number(r.system))*100).toFixed(2)+"%",({short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"})[s]];});
+ const csv=[headers,...lines].map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="stock_monitoring_data.csv";a.click();URL.revokeObjectURL(url);
+}
+
+function goToData(filter){
+ document.getElementById("statusFilter").value=filter||"ALL";
+ document.getElementById("search").value="";
+ render();
+ const label={ALL:"seluruh SKU",short:"SKU stok kurang",over:"SKU stok lebih",match:"SKU sesuai",unchecked:"SKU belum dicek"};
+ document.getElementById("filterNote").textContent="Filter aktif: "+(label[filter||"ALL"]||"seluruh SKU")+" · Sumber: Data PST.xlsx";
+ document.getElementById("detailSection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.querySelectorAll("[data-filter]").forEach(el=>{
+ el.addEventListener("click",()=>goToData(el.dataset.filter));
+ el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();goToData(el.dataset.filter);}});
+});
+function showDetail(sku){
+ const r=records.find(x=>x.sku===sku); if(!r)return;
+ const d=Number(r.actual)-Number(r.system), pct=(d/Number(r.system))*100;
+ const status={short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"}[state(r)];
+ const fields=[["SKU",r.sku],["Nama Barang",r.name],["Kategori",r.category||"Pcs"],["Gudang",r.wh],["Nama Gudang","Finished Goods"],["Lokasi",r.loc],["Stok Sistem",fmt(r.system)+" unit"],["Stok Aktual",r.actual==null?"Belum diisi":fmt(r.actual)+" unit"],["Selisih",r.actual==null?"—":(d>0?"+":"")+fmt(d)+" unit"],["Persentase Selisih",r.actual==null?"—":pct.toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2})+"%"],["Status",status]];
+ document.getElementById("detailTitle").textContent="Rincian "+r.sku;
+ document.getElementById("detailContent").innerHTML='<table class="table" style="min-width:0"><tbody>'+fields.map(f=>'<tr><th style="width:42%">'+esc(f[0])+'</th><td>'+esc(f[1])+'</td></tr>').join("")+'</tbody></table><p class="muted" style="font-size:11px">Sumber data: Data PST.xlsx · Item Master, Location Master, Warehouse List.</p>';
+ document.getElementById("detailEditBtn").onclick=()=>{closeDetail();editRecord(sku);};
+ document.getElementById("detailBack").style.display="flex";
+}
+function closeDetail(){document.getElementById("detailBack").style.display="none";}
+
+document.getElementById("search").addEventListener("input",render);
+document.getElementById("whFilter").addEventListener("change",render);
+document.getElementById("statusFilter").addEventListener("change",e=>applyStatusFilter(e.target.value));
+document.getElementById("statusFilter").addEventListener("input",e=>applyStatusFilter(e.target.value));function applyStatusFilter(f){
+ const sel=document.getElementById("statusFilter");
+ if(sel.value!==f) sel.value=f;
+ const label={ALL:"seluruh SKU",short:"SKU stok kurang",over:"SKU stok lebih",match:"SKU sesuai",unchecked:"SKU belum dicek"};
+ render();
+ const visible=document.querySelectorAll("#rows tr").length;
+ document.getElementById("filterNote").textContent="Filter aktif: "+label[f]+" · "+visible+" baris ditampilkan · Sumber: Data PST.xlsx";
+ document.getElementById("detailSection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+// Navigasi empat menu utama. Data tetap menggunakan records yang sama.
+const mainElement = document.querySelector("main");
+const dashboardMarkup = mainElement.innerHTML;
+const topbarMarkup = mainElement.querySelector(".topbar").outerHTML;
+let activePage = "dashboard";
+let movements = [];
+try { movements = JSON.parse(localStorage.getItem("stockMovementsPST_v1") || "[]"); } catch(e) { movements = []; }
+const saveMovements = () => localStorage.setItem("stockMovementsPST_v1", JSON.stringify(movements));
+// Seed transaksi simulasi dengan tanggal acak dalam rentang 1-30 November 2026.
+// Tanggal dibuat berurutan, tetapi tidak menggunakan semua tanggal 1 sampai 30.
+const demoDates = [
+  "2026-11-02","2026-11-02","2026-11-04","2026-11-05","2026-11-05",
+  "2026-11-07","2026-11-09","2026-11-09","2026-11-11","2026-11-13",
+  "2026-11-13","2026-11-15","2026-11-17","2026-11-17","2026-11-20",
+  "2026-11-21","2026-11-21","2026-11-23","2026-11-25","2026-11-25",
+  "2026-11-27","2026-11-28","2026-11-28","2026-11-30","2026-11-30",
+  "2026-11-30","2026-11-30","2026-11-30","2026-11-30","2026-11-30"
+];
+// Jika pengguna sudah memiliki riwayat tersimpan, riwayat non-demo tidak ditimpa.
+if (!Array.isArray(movements) || movements.length === 0) {
+  const demoRows = [
+    [0,"Masuk",42,"Penerimaan dari produksi"],[4,"Keluar",18,"Pengiriman pesanan pelanggan"],
+    [7,"Masuk",35,"Restock dari produksi"],[2,"Keluar",24,"Pengiriman pesanan pelanggan"],
+    [10,"Masuk",28,"Penerimaan barang jadi"],[5,"Keluar",16,"Pemenuhan permintaan cabang"],
+    [13,"Masuk",31,"Restock dari produksi"],[8,"Keluar",22,"Pengiriman pesanan pelanggan"],
+    [17,"Masuk",46,"Penerimaan dari produksi"],[11,"Keluar",14,"Pemenuhan permintaan cabang"],
+    [20,"Masuk",25,"Penerimaan barang jadi"],[14,"Keluar",19,"Pengiriman pesanan pelanggan"],
+    [23,"Masuk",38,"Restock dari produksi"],[18,"Keluar",27,"Pengiriman pesanan pelanggan"],
+    [25,"Masuk",33,"Penerimaan dari produksi"],[21,"Keluar",12,"Pemenuhan permintaan cabang"],
+    [3,"Masuk",29,"Penerimaan barang jadi"],[26,"Keluar",21,"Pengiriman pesanan pelanggan"],
+    [6,"Masuk",44,"Restock dari produksi"],[1,"Keluar",17,"Pemenuhan permintaan cabang"],
+    [9,"Masuk",36,"Penerimaan dari produksi"],[15,"Keluar",23,"Pengiriman pesanan pelanggan"],
+    [12,"Masuk",27,"Penerimaan barang jadi"],[19,"Keluar",15,"Pemenuhan permintaan cabang"],
+    [16,"Masuk",40,"Restock dari produksi"],[22,"Keluar",20,"Pengiriman pesanan pelanggan"],
+    [24,"Masuk",32,"Penerimaan dari produksi"],[27,"Keluar",26,"Pengiriman pesanan pelanggan"],
+    [5,"Masuk",21,"Penerimaan barang jadi"],[10,"Keluar",13,"Pemenuhan permintaan cabang"]
+  ];
+  movements = demoRows.map((row,i)=>{
+    const r=records[row[0]], date=demoDates[i];
+    const before=Number(r.system), type=row[1], qty=row[2], after=type==="Masuk"?before+qty:before-qty;
+    r.system=after;
+    return {date,sku:r.sku,name:r.name,type,qty,before,after,note:row[3],demo:true};
+  });
+  saveMovements(); saveLocal();
+} else {
+  // Perbarui tanggal pada data demo lama agar mengikuti pola tanggal acak yang berurutan.
+  const demoMovements = movements.filter(m=>m.demo);
+  demoMovements.forEach((m,i)=>{ if (demoDates[i]) m.date=demoDates[i]; });
+  movements.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  saveMovements();
+  // Rekonstruksi saldo akhir dari stok awal ditambah/dikurangi transaksi tersimpan.
+  movements.forEach(m=>{const r=records.find(x=>x.sku===m.sku);if(r){r.system=Number(r.system)+(m.type==="Masuk"?Number(m.qty):-Number(m.qty));}});
+}
+
+function setActiveMenu(page){
+  activePage = page;
+  document.querySelectorAll(".sidebar .navitem[data-page]").forEach(item=>{
+    item.classList.toggle("active", item.dataset.page === page);
+    item.setAttribute("aria-current", item.dataset.page === page ? "page" : "false");
+  });
+}
+function pageTable(headers, rows, emptyText){
+  return `<div class="tablewrap"><table class="table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${rows || `<tr><td colspan="${headers.length}" class="empty-state">${emptyText}</td></tr>`}</tbody></table></div>`;
+}
+function showPage(page){
+  setActiveMenu(page);
+  if(page === "dashboard"){
+    mainElement.innerHTML = dashboardMarkup;
+    render();
+    // Reattach listeners to controls recreated with dashboard markup.
+    document.getElementById("search").addEventListener("input",render);
+    document.getElementById("whFilter").addEventListener("change",render);
+    document.getElementById("statusFilter").addEventListener("change",e=>applyStatusFilter(e.target.value));
+    document.getElementById("statusFilter").addEventListener("input",e=>applyStatusFilter(e.target.value));
+    return;
+  }
+  if(page === "persediaan") renderPersediaan();
+  if(page === "pergerakan") renderPergerakan();
+  if(page === "opname") renderOpname();
+  if(page === "kanban") renderKanban();
+}
+function renderPersediaan(){
+  const q = (document.getElementById("pageSearch")?.value || "").toLowerCase();
+  const list = records.filter(r=>[r.sku,r.name,r.loc,r.wh].join(" ").toLowerCase().includes(q));
+  const rows = list.map(r=>`<tr>
+    <td class="sku">${esc(r.sku)}</td><td>${esc(r.name)}</td><td>${esc(r.category||"Pcs")}</td>
+    <td>${esc(r.wh)}</td><td>${esc(r.loc)}</td><td>${fmt(r.system)}</td>
+    <td><button class="action" onclick="editFromPage('${esc(r.sku)}')">Edit stok</button></td></tr>`).join("");
+  mainElement.innerHTML = `${topbarMarkup}<div class="sectionhead"><div><h2>Data Persediaan</h2><p>Daftar seluruh barang dan jumlah stok sistem di gudang WH-03</p></div></div>
+    <p class="page-intro">Data ditampilkan dari 28 SKU pada data sumber dan perubahan yang tersimpan di browser ini.</p>
+    <div class="page-kpis">
+      <div class="card"><div class="kpi-label">TOTAL SKU</div><div class="kpi-value">${fmt(records.length)}</div></div>
+      <div class="card"><div class="kpi-label">TOTAL STOK SISTEM</div><div class="kpi-value">${fmt(totals(records).system)}</div></div>
+      <div class="card"><div class="kpi-label">GUDANG</div><div class="kpi-value">WH-03</div><div class="kpi-sub">Finished Goods</div></div>
+    </div>
+    <div class="toolbar"><input id="pageSearch" class="control search" placeholder="Cari SKU, nama barang, atau lokasi..." value="${esc(q)}">
+    <button class="btn primary" onclick="openModal()">＋ Tambah Data</button><button class="btn secondary" onclick="exportCSV()">↓ Ekspor CSV</button></div>
+    <div id="persediaanTable">${pageTable(["SKU","NAMA BARANG","KATEGORI","GUDANG","LOKASI","STOK SISTEM","AKSI"],rows,"Belum ada data persediaan.")}</div>
+    <div class="footer">Sumber: Data PST.xlsx · Item Master, Location Master, dan Warehouse List.</div>`;
+  document.getElementById("pageSearch").addEventListener("input", e=>{
+    const value=e.target.value.toLowerCase();
+    const filtered=records.filter(r=>[r.sku,r.name,r.loc,r.wh].join(" ").toLowerCase().includes(value));
+    document.getElementById("persediaanTable").innerHTML=pageTable(["SKU","NAMA BARANG","KATEGORI","GUDANG","LOKASI","STOK SISTEM","AKSI"],filtered.map(r=>`<tr><td class="sku">${esc(r.sku)}</td><td>${esc(r.name)}</td><td>${esc(r.category||"Pcs")}</td><td>${esc(r.wh)}</td><td>${esc(r.loc)}</td><td>${fmt(r.system)}</td><td><button class="action" onclick="editFromPage('${esc(r.sku)}')">Edit stok</button></td></tr>`).join(""),"Tidak ada barang yang cocok.");
+  });
+}
+function renderPergerakan(){
+  const rows=movements.slice().reverse().map(m=>`<tr><td>${esc(m.date)}</td><td class="sku">${esc(m.sku)}</td><td>${esc(m.name)}</td>
+    <td><span class="status ${m.type==="Masuk"?"over":"short"}">${esc(m.type)}</span></td><td>${fmt(m.qty)}</td><td>${fmt(m.before)} → ${fmt(m.after)}</td><td>${esc(m.note||"-")}</td></tr>`).join("");
+  const incoming=movements.filter(m=>m.type==="Masuk").reduce((s,m)=>s+m.qty,0);
+  const outgoing=movements.filter(m=>m.type==="Keluar").reduce((s,m)=>s+m.qty,0);
+  mainElement.innerHTML=`${topbarMarkup}<div class="sectionhead"><div><h2>Pergerakan Stok</h2><p>Catatan transaksi barang masuk dan barang keluar</p></div></div>
+    <p class="page-intro">Tabel awal berisi 30 transaksi simulasi, satu transaksi untuk setiap tanggal 1–30 November 2026. Data ini dibuat untuk demonstrasi karena riwayat transaksi aktual tidak tersedia pada file sumber. Anda tetap dapat menambahkan transaksi baru melalui formulir di bawah.</p>
+    <div class="page-kpis"><div class="card"><div class="kpi-label">TOTAL TRANSAKSI</div><div class="kpi-value">${fmt(movements.length)}</div></div>
+    <div class="card"><div class="kpi-label">TOTAL BARANG MASUK</div><div class="kpi-value positive">${fmt(incoming)}</div></div>
+    <div class="card"><div class="kpi-label">TOTAL BARANG KELUAR</div><div class="kpi-value negative">${fmt(outgoing)}</div></div></div>
+    <div class="card"><h3 style="margin:0 0 12px;color:var(--navy);font-size:14px">Input Pergerakan Stok</h3>
+      <div class="form-inline"><select class="control" id="moveSku">${records.map(r=>`<option value="${esc(r.sku)}">${esc(r.sku)} — ${esc(r.name)}</option>`).join("")}</select>
+      <select class="control" id="moveType"><option>Masuk</option><option>Keluar</option></select>
+      <input class="control" id="moveQty" type="number" min="1" placeholder="Jumlah unit">
+      <input class="control" id="moveDate" type="date" min="2026-11-01" max="2026-11-30" value="2026-11-30">
+      <input class="control" id="moveNote" placeholder="Keterangan (opsional)">
+      <button class="btn primary" onclick="addMovement()">Simpan Transaksi</button></div></div>
+    <div class="sectionhead"><div><h2>Riwayat Pergerakan</h2><p>Transaksi yang telah dicatat pada dashboard</p></div></div>
+    ${pageTable(["TANGGAL","SKU","NAMA BARANG","JENIS","JUMLAH","STOK SEBELUM → SESUDAH","KETERANGAN"],rows,"Belum ada riwayat pergerakan. Silakan input transaksi di atas.")}`;
+}
+function addMovement(){
+  const sku=document.getElementById("moveSku").value, type=document.getElementById("moveType").value;
+  const qty=Number(document.getElementById("moveQty").value), date=document.getElementById("moveDate").value, note=document.getElementById("moveNote").value.trim();
+  const r=records.find(x=>x.sku===sku);
+  if(!r || !Number.isInteger(qty) || qty<=0 || !date){alert("Pilih SKU, tanggal, dan jumlah unit yang valid.");return;}
+  if(date<"2026-11-01"||date>"2026-11-30"){alert("Tanggal transaksi harus berada pada 1–30 November 2026.");return;}
+  const before=Number(r.system), after=type==="Masuk"?before+qty:before-qty;
+  if(after<0){alert("Stok sistem tidak mencukupi untuk transaksi keluar.");return;}
+  movements.push({date,sku,name:r.name,type,qty,before,after,note});
+  r.system=after; saveMovements(); saveLocal(); renderPergerakan();
+}
+function renderOpname(){
+  const q=(document.getElementById("opnameSearch")?.value||"").toLowerCase();
+  const list=records.filter(r=>[r.sku,r.name,r.loc].join(" ").toLowerCase().includes(q));
+  const checked=records.filter(r=>r.actual!==null&&r.actual!==undefined&&r.actual!=="");
+  const rows=list.map(r=>{
+    const s=state(r),d=s==="unchecked"?null:Number(r.actual)-Number(r.system);
+    const label={short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"}[s];
+    return `<tr><td class="sku">${esc(r.sku)}</td><td>${esc(r.name)}</td><td>${esc(r.loc)}</td><td>${fmt(r.system)}</td><td>${r.actual==null?"—":fmt(r.actual)}</td>
+      <td class="diff ${d===null?"muted":d<0?"negative":d>0?"positive":""}">${d===null?"—":(d>0?"+":"")+fmt(d)}</td>
+      <td><span class="status ${s}">${label}</span></td><td><button class="action" onclick="editFromPage('${esc(r.sku)}')">${r.actual==null?"Input hasil":"Ubah hasil"}</button></td></tr>`;
+  }).join("");
+  mainElement.innerHTML=`${topbarMarkup}<div class="sectionhead"><div><h2>Stock Opname</h2><p>Pencocokan stok sistem dengan hasil pemeriksaan fisik</p></div></div>
+    <p class="page-intro">Masukkan atau ubah stok aktual melalui tombol Input hasil. Selisih dan status dihitung otomatis berdasarkan stok aktual dikurangi stok sistem.</p>
+    <div class="page-kpis"><div class="card"><div class="kpi-label">SKU SUDAH DIPERIKSA</div><div class="kpi-value">${fmt(checked.length)} / ${fmt(records.length)}</div></div>
+    <div class="card"><div class="kpi-label">STOK KURANG</div><div class="kpi-value negative">${fmt(checked.filter(r=>state(r)==="short").length)} SKU</div></div>
+    <div class="card"><div class="kpi-label">STOK LEBIH</div><div class="kpi-value positive">${fmt(checked.filter(r=>state(r)==="over").length)} SKU</div></div></div>
+    <div class="toolbar"><input id="opnameSearch" class="control search" placeholder="Cari SKU, nama barang, atau lokasi..." value="${esc(q)}">
+      <select id="opnameFilter" class="control"><option value="ALL">Semua Status</option><option value="short">Stok Kurang</option><option value="over">Stok Lebih</option><option value="match">Sesuai</option><option value="unchecked">Belum Dicek</option></select></div>
+    <div id="opnameTable">${pageTable(["SKU","NAMA BARANG","LOKASI","STOK SISTEM","STOK AKTUAL","SELISIH","STATUS","AKSI"],rows,"Tidak ada data stock opname.")}</div>
+    <div class="footer">Sumber: stok sistem dan stok aktual pada Data PST.xlsx serta input pemeriksaan yang disimpan di browser.</div>`;
+  const update=()=>{
+    const value=document.getElementById("opnameSearch").value.toLowerCase(), status=document.getElementById("opnameFilter").value;
+    const filtered=records.filter(r=>[r.sku,r.name,r.loc].join(" ").toLowerCase().includes(value)&&(status==="ALL"||state(r)===status));
+    const htmlRows=filtered.map(r=>{const s=state(r),d=s==="unchecked"?null:Number(r.actual)-Number(r.system),label={short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"}[s];
+      return `<tr><td class="sku">${esc(r.sku)}</td><td>${esc(r.name)}</td><td>${esc(r.loc)}</td><td>${fmt(r.system)}</td><td>${r.actual==null?"—":fmt(r.actual)}</td><td class="diff ${d===null?"muted":d<0?"negative":d>0?"positive":""}">${d===null?"—":(d>0?"+":"")+fmt(d)}</td><td><span class="status ${s}">${label}</span></td><td><button class="action" onclick="editFromPage('${esc(r.sku)}')">${r.actual==null?"Input hasil":"Ubah hasil"}</button></td></tr>`;}).join("");
+    document.getElementById("opnameTable").innerHTML=pageTable(["SKU","NAMA BARANG","LOKASI","STOK SISTEM","STOK AKTUAL","SELISIH","STATUS","AKSI"],htmlRows,"Tidak ada data yang cocok.");
+  };
+  document.getElementById("opnameSearch").addEventListener("input",update);
+  document.getElementById("opnameFilter").addEventListener("change",update);
+}
+
+// Kanban barcode: satu label awal per SKU. Pengguna dapat menambah label untuk pallet berikutnya.
+let pallets = [];
+try { pallets = JSON.parse(localStorage.getItem("warehousePalletsPST_v1") || "[]"); } catch(e) { pallets=[]; }
+function savePallets(){ localStorage.setItem("warehousePalletsPST_v1", JSON.stringify(pallets)); }
+function ensurePallets(){
+  if(!pallets.length){
+    records.forEach(r=>pallets.push({id:"PLT-"+r.sku+"-001",sku:r.sku}));
+    savePallets();
+  }
+}
+function palletUrl(id){
+  const u=new URL(window.location.href);
+  u.searchParams.set("kanban",id);
+  u.hash="";
+  return u.toString();
+}
+function openPalletKanban(id){
+  const pallet=pallets.find(p=>p.id===id);
+  if(!pallet){alert("Nomor pallet tidak ditemukan pada perangkat ini.");return;}
+  const r=records.find(x=>x.sku===pallet.sku);
+  if(!r){alert("SKU untuk pallet ini tidak ditemukan.");return;}
+  const st=state(r),label={short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"}[st];
+  mainElement.innerHTML=`${topbarMarkup}
+    <div class="sectionhead"><div><h2>Digital Kanban Pallet</h2><p>Informasi barang berdasarkan barcode pallet yang dipindai</p></div>
+    <button class="btn secondary no-print" onclick="showPage('kanban')">← Kembali ke Daftar Kanban</button></div>
+    <div class="kanban-detail">
+      <div class="eyebrow">WAREHOUSE WH-03 · FINISHED GOODS</div>
+      <h2 style="font-size:28px;margin-top:7px">${esc(r.name)}</h2>
+      <div class="pallet-id" style="font-size:15px;margin-top:6px">${esc(pallet.id)}</div>
+      <div class="kanban-fields">
+        <div class="kanban-field"><small>KODE SKU</small><strong>${esc(r.sku)}</strong></div>
+        <div class="kanban-field"><small>LOKASI RAK</small><strong>${esc(r.loc)}</strong></div>
+        <div class="kanban-field"><small>WAREHOUSE</small><strong>${esc(r.wh)}</strong></div>
+        <div class="kanban-field"><small>STOK SISTEM SKU</small><strong>${fmt(r.system)} Pcs</strong></div>
+        <div class="kanban-field"><small>STOK AKTUAL SKU</small><strong>${r.actual==null?"Belum diinput":fmt(r.actual)+" Pcs"}</strong></div>
+        <div class="kanban-field"><small>STATUS STOK</small><strong>${label}</strong></div>
+      </div>
+      <div class="notice" style="margin:0">Catatan: angka stok di atas merupakan total untuk SKU, bukan hitungan khusus isi pallet. Isi aktual per pallet perlu dicatat terpisah jika ingin dipantau per pallet.</div>
+      <div class="kanban-toolbar no-print"><button class="btn primary" onclick="window.print()">Cetak Kanban</button><button class="btn secondary" onclick="showPage('kanban')">Daftar Semua Pallet</button></div>
+    </div>`;
+}
+function addPallet(sku){
+  const r=records.find(x=>x.sku===sku); if(!r)return;
+  const next=pallets.filter(p=>p.sku===sku).length+1;
+  const id="PLT-"+sku+"-"+String(next).padStart(3,"0");
+  if(pallets.some(p=>p.id===id)){alert("Nomor pallet sudah terdaftar.");return;}
+  pallets.push({id,sku});savePallets();renderKanban();
+}
+function renderKanban(){
+  ensurePallets();
+  const q=(document.getElementById("kanbanSearch")?.value||"").toLowerCase();
+  const list=pallets.filter(p=>{
+    const r=records.find(x=>x.sku===p.sku);
+    return r && [p.id,r.sku,r.name,r.loc].join(" ").toLowerCase().includes(q);
+  });
+  const cards=list.map(p=>{
+    const r=records.find(x=>x.sku===p.sku);
+    return `<div class="kanban-card">
+      <div><div class="eyebrow">WH-03 · FINISHED GOODS</div><h3>${esc(r.name)}</h3>
+      <div class="pallet-id">${esc(p.id)}</div>
+      <div class="kanban-meta"><b>SKU:</b> ${esc(r.sku)}<br><b>Lokasi:</b> ${esc(r.loc)}<br><b>Stok SKU:</b> ${fmt(r.system)} Pcs<br><b>Status:</b> ${{short:"Stok Kurang",over:"Stok Lebih",match:"Sesuai",unchecked:"Belum Dicek"}[state(r)]}</div>
+      <div class="no-print" style="margin-top:10px"><button class="action" onclick="openPalletKanban('${esc(p.id)}')">Buka Kanban</button></div></div>
+      <div><div class="qrbox" id="qr-${esc(p.id)}"></div><div style="font-size:9px;text-align:center;margin-top:5px;color:#52657b">${esc(p.id)}</div></div>
+    </div>`;
+  }).join("");
+  mainElement.innerHTML=`${topbarMarkup}
+    <div class="sectionhead"><div><h2>Kanban Barcode Pallet</h2><p>Buat dan cetak label QR Code untuk ditempel pada setiap pallet</p></div></div>
+    <p class="page-intro">Setiap SKU otomatis dibuatkan satu pallet awal. Jika satu SKU memiliki beberapa pallet, gunakan tombol Tambah Pallet untuk membuat QR Code tambahan dengan nomor unik.</p>
+    <div class="notice"><b>Penting:</b> agar QR Code dapat dipindai dari HP lain dan langsung membuka Kanban, unggah file HTML ini ke hosting/server yang bisa diakses perangkat operator. Jika hanya dibuka sebagai file lokal di satu komputer, QR Code tidak dapat membuka file tersebut di HP lain. QR Code memuat alamat halaman ini beserta ID pallet.</div>
+    <div class="kanban-toolbar no-print">
+      <input class="control search" id="kanbanSearch" placeholder="Cari nomor pallet, SKU, nama barang, lokasi..." value="${esc(q)}">
+      <select class="control" id="addPalletSku">${records.map(r=>`<option value="${esc(r.sku)}">${esc(r.sku)} — ${esc(r.name)}</option>`).join("")}</select>
+      <button class="btn primary" onclick="addPallet(document.getElementById('addPalletSku').value)">＋ Tambah Pallet</button>
+      <button class="btn secondary" onclick="window.print()">Cetak Semua Label</button>
+    </div>
+    <div class="kanban-grid" id="kanbanPrintArea">${cards || '<div class="empty-state">Tidak ada pallet yang cocok dengan pencarian.</div>'}</div>
+    <div class="footer">Label QR menggunakan URL halaman aktif. Untuk pemakaian lintas perangkat, halaman harus di-hosting dan semua HP harus dapat mengakses alamat tersebut.</div>`;
+  document.getElementById("kanbanSearch").addEventListener("input",renderKanban);
+  if(typeof QRCode==="undefined"){
+    document.querySelectorAll(".qrbox").forEach(el=>el.textContent="QR perlu koneksi internet");
+  }else{
+    list.forEach(p=>{
+      const el=document.getElementById("qr-"+p.id);
+      if(el) new QRCode(el,{text:palletUrl(p.id),width:104,height:104,colorDark:"#102744",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+    });
+  }
+}
+
+function editFromPage(sku){
+  const returnPage=activePage;
+  editRecord(sku);
+  const originalSave=window.saveRecord;
+  // Simpan lalu kembali ke menu yang sedang dibuka.
+  window.saveRecord=function(){
+    originalSave();
+    window.saveRecord=originalSave;
+    if(document.getElementById("modalback").style.display!=="flex") showPage(returnPage);
+  };
+}
+document.querySelectorAll(".sidebar .navitem[data-page]").forEach(item=>{
+  item.addEventListener("click",()=>showPage(item.dataset.page));
+  item.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showPage(item.dataset.page);}});
+});
+
+render();
+const scannedPallet = new URLSearchParams(window.location.search).get("kanban");
+if(scannedPallet){ ensurePallets(); openPalletKanban(scannedPallet); }
+</script>
+
+<div class="modalback" id="detailBack" style="display:none">
+ <div class="modal" style="width:min(560px,100%);max-height:85vh;overflow:auto">
+  <h3 id="detailTitle">Detail SKU</h3>
+  <div id="detailContent"></div>
+  <div class="modalactions"><button class="btn secondary" onclick="closeDetail()">Tutup</button><button class="btn primary" id="detailEditBtn">Edit Data</button></div>
+ </div>
+</div>
+</body>
+</html>
